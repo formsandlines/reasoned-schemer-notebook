@@ -18,7 +18,8 @@
   'fail ;; is a goal, that never succeeds
   'u# ;; alternative syntax
 
-  ;; run* produces a list for all successful associations with q
+  'run* ;; produces a list for all successful associations with q
+
   (run* [q] succeed) ;=> (_0)
   (run* [q] s#) ;=> (_0)
 

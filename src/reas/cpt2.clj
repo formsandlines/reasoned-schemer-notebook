@@ -6,9 +6,11 @@
 
 
 ;;=============================================================
-;; CHAPTER 1 - Playthings
+;; CHAPTER 2 - TEACHING OLD TOYS NEW TRICKS
 
 (comment
+  ;;-------------------------------------------------------------
+  ;; List relations: car^o and cdr^o
 
   'firsto ;; is core.logic’s car^o
 
@@ -40,6 +42,6 @@
       (caro '((a) (b) (c)) y)
       (l/== (lcons x y) r))) ;=> ((grape a))
 
-
+  'resto ;; is core.logic’s cdr^o
 
   )
