@@ -8,6 +8,43 @@
 ;;=============================================================
 ;; CHAPTER 2 - TEACHING OLD TOYS NEW TRICKS
 
+(declare pairo)
+(declare singletono)
+
+;; l/resto can be defined/implemented just like caro:
+#_:clj-kondo/ignore
+(defrel cdro [p d]
+  (fresh [a]
+    (l/== (lcons a d) p)))
+
+;; l/firsto can be defined/implemented like this:
+#_:clj-kondo/ignore
+(defrel caro [p a]
+  (fresh [d]
+    (l/== (lcons a d) p)))
+
+;; l/conso can be defined/implemented just like caro and cdro:
+#_:clj-kondo/ignore
+(defrel conso [a d p]
+  (l/== (lcons a d) p))
+
+;; l/emptyo can be defined/implemented via unification:
+#_:clj-kondo/ignore
+(defrel nullo [x]
+  (l/== '() x))
+
+#_:clj-kondo/ignore
+(defrel pairo [p]
+  (fresh [a d]
+    (l/conso a d p)))
+
+#_:clj-kondo/ignore
+(defrel singletono [l]
+  (fresh [d]
+    (l/resto l d)
+    (l/emptyo d)))
+
+
 (comment
   ;;-------------------------------------------------------------
   ;; List relations: car^o and cdr^o
@@ -34,11 +71,7 @@
   'llist ;; is a macro to create nested lcons (lists)
   (llist 'a 'b 'c) ;=> (a b . c)
 
-  ;; l/firsto can be defined/implemented like this:
-  #_:clj-kondo/ignore
-  (defrel caro [p a]
-    (fresh [d]
-      (l/== (lcons a d) p)))
+  'caro ;; re-implemented
 
   (run* [r]
     (fresh [x y]
@@ -57,11 +90,7 @@
         (l/resto v w)
         (l/firsto w r)))) ;=> (o)
 
-  ;; l/resto can be defined/implemented just like caro:
-  #_:clj-kondo/ignore
-  (defrel cdro [p d]
-    (fresh [a]
-      (l/== (lcons a d) p)))
+  'cdro ;; re-implemented
 
   (run* [r]
     (fresh [x y]
@@ -112,10 +141,7 @@
       (l/conso x `(a ~x c) l)
       (l/== `(d a ~x c) l))) ;=> ((d a d c))
 
-  ;; l/conso can be defined/implemented just like caro and cdro:
-  #_:clj-kondo/ignore
-  (defrel conso [a d p]
-    (l/== (lcons a d) p))
+  'conso ;; re-implemented
 
   (run* [l]
     (fresh [d t x y w]
@@ -151,10 +177,7 @@
   (run* [x]
     (l/emptyo x)) ;=> (())
 
-  ;; l/emptyo can be defined/implemented via unification:
-  #_:clj-kondo/ignore
-  (defrel nullo [x]
-    (l/== '() x))
+  'nullo ;; re-implemented
 
   )
 (comment
@@ -165,12 +188,7 @@
     (fresh [x y]
       (l/== (lcons x (lcons y 'salad)) r))) ;=> ((_0 _1 . salad))
 
-  'pairo ;; there seems to be nothing similar in core.logic
-
-  #_:clj-kondo/ignore
-  (defrel pairo [p]
-    (fresh [a d]
-      (l/conso a d p)))
+  'pairo ;; implemened; there seems to be nothing similar in core.logic
 
   ;; to satisfy pairo, we need to provide a cons-cell/pair
   (run* [q]
@@ -229,11 +247,7 @@
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
   ;; simplified:
-  #_:clj-kondo/ignore
-  (defrel singletono [l]
-    (fresh [d]
-      (l/resto l d)
-      (l/emptyo d)))
+  'singletono ;; implemented
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; THE LAW OF u#
