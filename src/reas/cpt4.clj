@@ -1,6 +1,6 @@
 (ns reas.cpt4
   (:require
-   [clojure.core.logic :as l :refer [run run* succeed fail s# u#
+   [clojure.core.logic :as l :refer [run run* succeed fail s# u# defne
                                      conde fresh lcons llist]]
    [reas.utils :as rs :refer [defrel]]))
 
@@ -25,6 +25,16 @@
        (l/conso a res out)
        (appendo d t res))]))
 
+(comment
+  ;; alternative, more concise definitions using defne:
+
+  #_:clj-kondo/ignore
+  (defne appendo [l t out]
+    ([() _ _]      (l/== t out))
+    ([[a . d] _ _] (fresh [res]
+                     (appendo d t res)
+                     (l/conso a res out))))
+  )
 
 (comment
   ;;-------------------------------------------------------------
@@ -167,7 +177,7 @@
         '(cake & ice cream)
         (llist 'd 't z)
         x)))
-  ;=> (cake & ice cream d t . _0)
+  ;=> ((cake & ice cream d t . _0))
 
   (run 6 [x]
     (fresh [y]

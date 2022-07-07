@@ -1,9 +1,8 @@
 (ns reas.cpt3
   (:require
-   [clojure.core.logic :as l :refer [run run* succeed fail s# u#
+   [clojure.core.logic :as l :refer [run run* succeed fail s# u# defne
                                      conde fresh lcons llist]]
-   [reas.utils :as rs :refer [defrel]]
-   [reas.cpt2 :refer [pairo]]))
+   [reas.utils :as rs :refer [defrel]]))
 
 
 ;;=============================================================
@@ -60,6 +59,37 @@
        (proper-membero x d))]))
 
 (comment
+  ;; alternative, more concise definitions using defne:
+
+  #_:clj-kondo/ignore
+  (defne listo [l]
+    ([()])
+    ([[_ . d]] (listo d)))
+
+  #_:clj-kondo/ignore
+  (defne lolo [l]
+    ([()])
+    ([[a . d]] (listo a) (lolo d)))
+
+  #_:clj-kondo/ignore
+  (defne loso [l]
+    ([()])
+    ([[a . d]] (singletono a) (loso d)))
+
+  #_:clj-kondo/ignore
+  (defne membero [x l]
+    ([_ [x . _]])
+    ([_ [_ . d]] (membero x d)))
+
+  #_:clj-kondo/ignore
+  (defne proper-membero [x l]
+    ([_ [x . d]] (listo d))
+    ([_ [_ . d]] (proper-membero x d)))
+
+  )
+
+
+(comment
   ;;-------------------------------------------------------------
   ;; List relations and (run n …)
 
@@ -97,7 +127,7 @@
   (run 7 [x y]
     (conde
       [(l/== 'split x) (l/== 'pea y)]
-      [(l/== 'red x) (l/== 'bean y)]
+      [(l/== 'red x)   (l/== 'bean y)]
       [(l/== 'green x) (l/== 'lentil y)]))
   ;=> ([split pea] [red bean] [green lentil])  (equal to cpt1, last expr.)
 
@@ -146,6 +176,8 @@
 
     ;; ((_0 _1)) still appears later and
     ;; (() () ()) still appears later with defrel
+
+    ;; however, the defne definition behaves just like defrel in this case
     )
 
   (run 5 [x]
