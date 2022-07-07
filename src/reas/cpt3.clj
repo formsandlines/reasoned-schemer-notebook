@@ -9,14 +9,16 @@
 ;;=============================================================
 ;; CHAPTER 3 - SEEING OLD FRIENDS IN NEW WAYS
 
-#_:clj-kondo/ignore
-(defrel listo [l]
+(defn listo [l]
   (conde
     [(l/emptyo l)]
     [(fresh [d]
        (l/resto l d)
        (listo d))]))
 
+;; using defn yields a different order of results in (run n),
+;; compared to the order in the book, so I used defrel instead:
+;; ? why though
 #_:clj-kondo/ignore
 (defrel lolo [l]
   (conde
@@ -27,14 +29,12 @@
        (lolo d))]))
 
 ;; redefined from cpt2
-#_:clj-kondo/ignore
-(defrel singletono [l]
+(defn singletono [l]
   (fresh [a]
     (l/== `(~a) l)))
 
 ;; list of singletons
-#_:clj-kondo/ignore
-(defrel loso [l]
+(defn loso [l]
   (conde
     [(l/emptyo l)]
     [(fresh [a d]
@@ -42,16 +42,14 @@
        (singletono a)
        (loso d))]))
 
-#_:clj-kondo/ignore
-(defrel membero [x l]
+(defn membero [x l]
   (conde
     [(l/firsto l x)]
     [(fresh [d]
        (l/resto l d)
        (membero x d))]))
 
-#_:clj-kondo/ignore
-(defrel proper-membero [x l]
+(defn proper-membero [x l]
   (conde
     [(l/firsto l x)
      (fresh [d]
@@ -138,6 +136,17 @@
 
   (run 5 [x]
     (lolo (llist '(a b) '(c d) x))) ;=> (() (()) ((_0)) (() ()) ((_0 _1)))
+
+  (comment
+    ;; in this example, the order of results differs in defrel vs defn:
+    ;; if lolo was defined by defn:
+
+    ;defn  => (() (()) (() ()) ((_0)) (() () ()))
+    ;defrel=> (() (()) ((_0)) (() ()) ((_0 _1)))
+
+    ;; ((_0 _1)) still appears later and
+    ;; (() () ()) still appears later with defrel
+    )
 
   (run 5 [x]
     (lolo (llist '(a b) '(c d) '(() ())))) ;=> (_0)
@@ -324,13 +333,12 @@
     ;; fresh variables are also already declared in listo
 
     ;; simpler version:
-    #_:clj-kondo/ignore
-    (defrel proper-membero-1 [x l]
+    (defn proper-membero-1 [x l]
       (conde
         [(l/firsto l x) (listo l)]
         [(fresh [d]
            (l/resto l d)
-           (member-propero x d))]))
+           (proper-membero-1 x d))]))
 
     (run 5 [l]
       (proper-membero-1 'tofu l))

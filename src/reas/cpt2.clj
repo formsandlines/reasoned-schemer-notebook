@@ -1,6 +1,6 @@
 (ns reas.cpt2
   (:require
-   [clojure.core.logic :as l :refer [run* succeed fail s# u#
+   [clojure.core.logic :as l :refer [run* succeed fail s# u# defne
                                      conde fresh and* or* lcons llist]]
    [reas.utils :as rs :refer [defrel]]))
 
@@ -11,39 +11,62 @@
 (declare pairo)
 (declare singletono)
 
+;; Note: in core.logic, defrel is actually not needed!
+
 ;; l/resto can be defined/implemented just like caro:
-#_:clj-kondo/ignore
-(defrel cdro [p d]
+(defn cdro [p d]
   (fresh [a]
     (l/== (lcons a d) p)))
 
 ;; l/firsto can be defined/implemented like this:
-#_:clj-kondo/ignore
-(defrel caro [p a]
+(defn caro [p a]
   (fresh [d]
     (l/== (lcons a d) p)))
 
 ;; l/conso can be defined/implemented just like caro and cdro:
-#_:clj-kondo/ignore
-(defrel conso [a d p]
+(defn conso [a d p]
   (l/== (lcons a d) p))
 
 ;; l/emptyo can be defined/implemented via unification:
-#_:clj-kondo/ignore
-(defrel nullo [x]
+(defn nullo [x]
   (l/== '() x))
 
-#_:clj-kondo/ignore
-(defrel pairo [p]
+(defn pairo [p]
   (fresh [a d]
     (l/conso a d p)))
 
-#_:clj-kondo/ignore
-(defrel singletono [l]
+(defn singletono [l]
   (fresh [d]
     (l/resto l d)
     (l/emptyo d)))
 
+(comment
+  ;; alternative, more concise definitions using defne:
+
+  #_:clj-kondo/ignore
+  (defne cdro [p d]
+    ([[_ . d] _]))
+
+  #_:clj-kondo/ignore
+  (defne caro [p a]
+    ([[a . _] _]))
+
+  #_:clj-kondo/ignore
+  (defne conso [a d p]
+    ([_ _ [a . d]]))
+
+  #_:clj-kondo/ignore
+  (defne nullo [x]
+    (['()]))
+
+  #_:clj-kondo/ignore
+  (defne pairo [p]
+    ([[a . d]]))
+
+  #_:clj-kondo/ignore
+  (defne singletono [l]
+    ([[_ . '()]]))
+  )
 
 (comment
   ;;-------------------------------------------------------------
@@ -178,6 +201,9 @@
     (l/emptyo x)) ;=> (())
 
   'nullo ;; re-implemented
+
+  (run* [x]
+    (nullo x)) ;=> (())
 
   )
 (comment

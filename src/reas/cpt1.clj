@@ -346,6 +346,28 @@
        (and* [(l/== false x) (teacupo y)])]))
   ;=> ([false tea] [false cup] [tea _0] [cup _0])
 
+  (comment
+    ;; core.logic has a pattern-matching facility which can directly
+    ;; associate t with either 'tea or 'cup like in conde:
+
+    #_:clj-kondo/ignore
+    (l/defne teacupo-ptn
+      [t]
+      (['tea])
+      (['cup]))
+
+    (run* [x]
+      (teacupo-ptn x)) ;=> (tea cup)
+
+    (run* [x]
+      (teacupo-ptn 'tea)) ;=> (_0)
+    (run* [x]
+      (teacupo-ptn 'cup)) ;=> (_0)
+    (run* [x]
+      (teacupo-ptn 'coffee)) ;=> ()
+    )
+
+
   )
 (comment
   ;;-------------------------------------------------------------
