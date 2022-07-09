@@ -210,6 +210,22 @@
   ;;-------------------------------------------------------------
   ;; Pairs
 
+  ;; in Scheme, a pair is a cons cell, not just a 2-element list!
+  ;; pairs are constructed with (cons x y) and represented like (a . b)
+  ;; (car p) selects the first, (cdr p) the second element of a pair
+  ;; a pair cannot be an empty list, because it has no car and cdr
+
+  (defn pair? [l]
+    (and (seqable? l) ((complement empty?) l)))
+
+  (comment
+    ;; Can you extend empty? and pair? to lcons ?
+    )
+
+  (pair? '()) ;=> false
+  (pair? 'pair) ;=> false
+  (pair? '(pear)) ;=> true
+
   (run* [r]
     (fresh [x y]
       (l/== (lcons x (lcons y 'salad)) r))) ;=> ((_0 _1 . salad))
@@ -238,15 +254,10 @@
   ;; Singleton lists
 
   ;; similar to the book:
-  (defn singleton?-1 [l]
-    (let [pair? #(and (coll? %) (== 2 (count %)))]
-      (cond
-        (pair? l) (empty? (rest l))
-        :else false)))
-
-  ;; more concise:
   (defn singleton? [l]
-    (and (coll? l) (== 1 (count l))))
+    (cond
+      (pair? l) (empty? (rest l))
+      :else false))
 
   (singleton? '((a) (a b) c)) ;=> false
   (singleton? '()) ;=> false
@@ -316,6 +327,4 @@
   (lcons '() '()) ;=> (())
 
   )
-
-
 

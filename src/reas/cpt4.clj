@@ -16,24 +16,37 @@
        (appendo d t res)
        (l/conso a res out))]))
 
-;; doesn’t work in (run 7) example below, even with defrel:
 (defn appendo-safe [l t out]
   (conde
     [(l/emptyo l) (l/== t out)]
     [(fresh [a d res]
        (l/conso a d l)
        (l/conso a res out)
-       (appendo d t res))]))
+       (appendo-safe d t res))]))
+
+(defn swappendo [l t out]
+  (conde
+    [(fresh [a d res]
+       (l/conso a d l)
+       (l/conso a res out)
+       (swappendo d t res))]
+    [(l/emptyo l) (l/== t out)]))
+
+(defn unwrapo [x out]
+  (conde
+    [(fresh [a]
+       (l/firsto x a) (unwrapo a out))]
+    [(l/== x out)]))
 
 (comment
   ;; alternative, more concise definitions using defne:
 
   #_:clj-kondo/ignore
-  (defne appendo [l t out]
+  (defne appendo-safe [l t out]
     ([() _ _]      (l/== t out))
     ([[a . d] _ _] (fresh [res]
-                     (appendo d t res)
-                     (l/conso a res out))))
+                     (l/conso a res out)
+                     (appendo-safe d t res))))
   )
 
 (comment
@@ -194,6 +207,7 @@
   ;    (t)
   ;    ())
 
+  ;; *1:
   (run 6 [x y]
     (l/appendo x y '(cake & ice d t)))
   ;=> ([() (cake & ice d t)]
@@ -207,17 +221,121 @@
     (appendo x y '(cake & ice d t)))
   ;=> no value (endless recursion, looking for the 7th value)
 
-  ;; ? doesn’t work
-  (run 7 [x y]
+  ;; also stuck in endless recursion:
+  (run* [x y]
+    (appendo x y '(cake & ice d t)))
+
+  ;; doesn’t get stuck, because the recursive line/goal comes last:
+  (run* [x y]
     (appendo-safe x y '(cake & ice d t)))
   ;=> same as with (run 6), since there is no possible 7th value
 
   (run 7 [x y]
-    (l/appendo x y '(cake & ice d t)))
-  ;=> same as with (run 6), since there is no possible 7th value
+    (appendo-safe x y '(cake & ice d t)))
+  ;=> see above
 
-  
+  (comment
+    ;; the library function works the same way:
+    (run 7 [x y]
+      (l/appendo x y '(cake & ice d t)))
+    )
+
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;; THE FIRST COMMANDMENT
+  ;; Within each sequence of goals, move non-recursive goals
+  ;; before recursive goals.
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
   )
+(comment
+  ;;-------------------------------------------------------------
+  ;; swappendo
 
+  (comment
+    ;; conso fails if the list (result) is empty:
+    (run* [a d]
+      (l/conso a d '())) ;=> ()
+
+    )
+
+  (run* [x y]
+    (swappendo x y '(cake & ice d t)))
+  ;=> same as *1 (appendo)
+
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;; THE LAW OF SWAPPING COND^e LINES
+  ;; Swapping two cond^e lines does not affect the values
+  ;; contributed by cond^e.
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+  (defn pair? [l]
+    (and (seqable? l) ((complement empty?) l)))
+
+  (defn unwrap [x]
+    (cond
+      (pair? x) (unwrap (first x))
+      :else x))
+
+  (unwrap '((((pizza))))) ;=> pizza
+
+  (unwrap '((((pizza pie) with)) garlic)) ;=> pizza
+
+  (run* [x]
+    (unwrapo '(((pizza))) x))
+  ;=> ((((pizza))) ((pizza)) (pizza) pizza)
+
+  (run 1 [x]
+    (unwrapo x 'pizza)) ;=> (pizza)
+
+  (run 1 [x]
+    (unwrapo `((~x)) 'pizza)) ;=> (pizza)
+
+  (run 5 [x]
+    (unwrapo x 'pizza))
+  ;=> (pizza
+  ;    (pizza . _0)
+  ;    ((pizza . _0) . _1)
+  ;    (((pizza . _0) . _1) . _2)
+  ;    ((((pizza . _0) . _1) . _2) . _3))
+
+  (comment
+    ;; which succeeding gaal will appear first in the output?
+    (defn case-test [x]
+      (conde
+        [(l/== 'foo x)]
+        [(l/== 'bar x)]))
+    ;; -> same order as definition:
+    (run* [x]
+      (case-test x)) ;=> (foo bar)
+
+    ;; how does recursions affect the order of results?
+    (defn rec-test [x]
+      (conde
+        [(l/== 'foo x) (howo x)]
+        [(l/== 'bar x) (howo x)]
+        [s#]))
+    ;; -> it seems like the non-recursive goal is evaluated first:
+    (run 3 [x]
+      (rec-test x)) ;=> (_0 foo bar)
+    )
+
+  ;; Note: the actual Clojure output has a weird lazy-seq reference
+  ;;       instead of ((pizza)) for all results after the first
+  (run 5 [x]
+    (unwrapo x '((pizza))))
+  ;=> (((pizza))
+  ;    (((pizza)) . _0)
+  ;    ((((pizza)) . _0) . _1)
+  ;    (((((pizza)) . _0) . _1) . _2)
+  ;    ((((((pizza)) . _0) . _1) . _2) . _3))
+
+  (run 5 [x]
+    (unwrapo `((~x)) 'pizza))
+  ;=> (pizza
+  ;    (pizza . _0)
+  ;    ((pizza . _0) . _1)
+  ;    (((pizza . _0) . _1) . _2)
+  ;    ((((pizza . _0) . _1) . _2) . _3))
+
+  )
 
