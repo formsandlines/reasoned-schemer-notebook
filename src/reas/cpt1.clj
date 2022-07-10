@@ -81,19 +81,26 @@
   ;;-------------------------------------------------------------
   ;; patterns in unification
 
-  ;; beware namespaces in symbols for ` vs ' !
-  (= `a 'a) ;=> false (in `x the symbol is fully qualified)
+  (comment
+    ;; beware namespaces in symbols for ` vs ' !
+    (= `a 'a) ;=> false (in `x the symbol is fully qualified)
+    (= (list 'a) '(a)) ;=> true
+    (= (list 'a) `(a)) ;=> false
+    ;; I use (list …) for Schemes quasiquote as suggested by core.logic:
+    ;; https://github.com/clojure/core.logic/wiki/Differences-from-The-Reasoned-Schemer
+    )
 
   ;; if two patterns match in == and all appearing lvars can be unified,
   ;; the goal will succeed
   (run* [q]
-    (l/== `(((pea)) pod) `(((pea)) ~q))) ;=> (cpt1/pod) 
+    (l/== (list '((pea)) 'pod) (list '((pea)) q))) ;=> (pod) 
   (run* [q]
-    (l/== `(((~q)) pod) `(((pea)) pod))) ;=> (cpt1/pea)
+    (l/== (list `((~q)) 'pod) (list '((pea)) 'pod))) ;=> (pea)
+
   ;; fusing fresh lvars works the same when nested:
   (run* [q]
     (fresh [x]
-      (l/== `(((~q)) pod) `(((~x)) pod)))) ;=> (_0)
+      (l/== (list `((~q)) 'pod) (list `((~x)) 'pod)))) ;=> (_0)
 
   ;; fused lvars get associated with the same values if they are
   ;; no longer fresh
@@ -102,16 +109,16 @@
   ;; q gets fused with x, it will also be associated with pod
   (run* [q]
     (fresh [x]
-      (l/== `(((~q)) ~x) `(((~x)) pod)))) ;=> (cpt1/pod)
+      (l/== (list `((~q)) x) (list `((~x)) 'pod)))) ;=> (pod)
 
   (run* [q]
     (fresh [x]
-      (l/== `(~x ~x) q))) ;=> ((_0 _0))
+      (l/== (list x x) q))) ;=> ((_0 _0))
 
   (run* [q]
     (fresh [x]
       (fresh [y]
-        (l/== `(~q ~y) `((~x ~y) ~x))))) ;=> ((_0 _0))
+        (l/== (list q y) (list (list x y) x))))) ;=> ((_0 _0))
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; THE SECOND LAW OF ≡
@@ -183,8 +190,8 @@
     (fresh [x]
       (fresh [y]
         (or*
-          [(l/== `(~x ~y) q)
-           (l/== `(~y ~x) q)])))) ;=> ((_0 _1) (_0 _1))
+          [(l/== (list x y) q)
+           (l/== (list y x) q)])))) ;=> ((_0 _1) (_0 _1))
 
   ;; different orders of return values are considered to be equal
   ('equal? (run* [x]
@@ -230,7 +237,7 @@
           [(l/== 'split x)
            (and*
              [(l/== 'pea y)
-              (l/== `(~x ~y) r)])])))) ;=> ((split pea))
+              (l/== (list x y) r)])])))) ;=> ((split pea))
 
   )
 (comment
@@ -244,7 +251,7 @@
           [(and*
              [(l/== 'split x)
               (l/== 'pea y)])
-           (l/== `(~x ~y) r)])))) ;=> ((split pea))
+           (l/== (list x y) r)])))) ;=> ((split pea))
 
   ;; can be shortened to:
   (run* [r]
@@ -252,7 +259,7 @@
       (and*
         [(l/== 'split x)
          (l/== 'pea y)
-         (l/== `(~x ~y) r)]))) ;=> ((split pea))
+         (l/== (list x y) r)]))) ;=> ((split pea))
 
   ;; fresh lvars in run* arguments
 
@@ -263,7 +270,7 @@
     (and*
       [(l/== 'split x)
        (l/== 'pea y)
-       (l/== `(~x ~y) r)])) ;=> ([(split pea) split pea])
+       (l/== (list x y) r)])) ;=> ([(split pea) split pea])
 
   ;; without r, we get closer to the first result:
   (run* [x y]
@@ -284,7 +291,7 @@
         [(or*
            [(and* [(l/== 'split x) (l/== 'pea y)])
             (and* [(l/== 'red x) (l/== 'bean y)])])
-         (l/== `(~x ~y soup) r)])))
+         (l/== (list x y 'soup) r)])))
   ;=> ((split pea soup) (red bean soup))
 
   ;; fresh behaves like a conj, so this has the same value:
@@ -293,7 +300,7 @@
       (or*
         [(and* [(l/== 'split x) (l/== 'pea y)])
          (and* [(l/== 'red x) (l/== 'bean y)])])
-      (l/== `(~x ~y soup) r)))
+      (l/== (list x y 'soup) r)))
 
   ;; run* also behaves like a conj
   (run* [x y z]

@@ -30,7 +30,7 @@
 ;; redefined from cpt2
 (defn singletono [l]
   (fresh [a]
-    (l/== `(~a) l)))
+    (l/== (list a) l)))
 
 ;; list of singletons
 (defn loso [l]
@@ -104,7 +104,7 @@
 
   ;; the exact value of x is not necessary for listo to succeed
   (run* [x]
-    (listo `(a b ~x d))) ;=> (_0)
+    (listo (list 'a 'b x 'd))) ;=> (_0)
 
   ;; x can be associated with an unbounded number of possible list-values
   ;; for the goal to succeed -> the expression has no value
@@ -141,7 +141,7 @@
     [l]
     (cond
       (empty? l) true
-      (list? (first l)) (lol? (rest l))
+      (seq? (first l)) (lol? (rest l))
       :else false))
 
   'lolo ; implemened
@@ -152,7 +152,7 @@
 
   (run* [q]
     (fresh [x y]
-      (lolo `((a b) (~x c) (d ~y))))) ;=> (_0)
+      (lolo (list '(a b) (list x 'c) (list 'd y))))) ;=> (_0)
 
   (run 1 [l]
     (lolo l)) ;=> (())
@@ -208,8 +208,8 @@
   ;; and loso expects a proper list of singletons
   (run 4 [r]
     (fresh [w x y z]
-      (loso (llist `(g) (lcons `e w) (lcons x y) z))
-      (l/== `(~w ~(lcons x y) ~z) r)))
+      (loso (llist '(g) (lcons 'e w) (lcons x y) z))
+      (l/== (list w (lcons x y) z) r)))
   ;=> ((() (_0) ())
   ;    (() (_0) ((_1)))
   ;    (() (_0) ((_1) (_2)))
@@ -218,15 +218,15 @@
   ;; without llist in loso (not a cons -> z must be a singleton):
   (run 4 [r]
     (fresh [w x y z]
-      (loso `((g) ~(lcons `e w) ~(lcons x y) ~z))
-      (l/== `(~w ~(lcons x y) ~z) r)))
+      (loso (list '(g) (lcons 'e w) (lcons x y) z))
+      (l/== (list w (lcons x y) z) r)))
   ;=> ((() (_0) (_1)))
 
   ;; in `out` we see z being merged into the list at tail position,
   ;; while it is actually a list of singletons
   (run 3 [out]
     (fresh [w x y z]
-      (l/== (llist `(g) (lcons `e w) (lcons x y) z) out)
+      (l/== (llist '(g) (lcons 'e w) (lcons x y) z) out)
       (loso out)))
   ;=> (((g) (e) (_0))
   ;    ((g) (e) (_0) (_1))
@@ -282,28 +282,28 @@
   ;; here, x gets associated with e, because there must be a member e
   ;; in the list for the goal to succeed
   (run* [x]
-    (l/membero `e `(pasta ~x fagioli))) ;=> (e)
+    (l/membero 'e (list 'pasta x 'fagioli))) ;=> (e)
 
   ;; here, the membero succeeds with e before it even reaches x,
   ;; so x remains fresh
   (run 1 [x]
-    (l/membero `e `(pasta e ~x fagioli))) ;=> (_0)
+    (l/membero 'e (list 'pasta 'e x 'fagioli))) ;=> (_0)
 
   ;; even if x could be anything in this example, it is still associated
   ;; with e, which succeeds the first conde goal in membero
   ;; and there is no other appearance of x in the list
   (run 1 [x]
-    (l/membero `e `(pasta ~x e fagioli))) ;=> (e)
+    (l/membero 'e (list 'pasta x 'e 'fagioli))) ;=> (e)
 
   ;; x and y are determined separately in this expression so x succeeds
   ;; with e and then y succeeds with e, each leaving the other fresh
   (run* [x y]
-    (membero `e `(pasta ~x fagioli ~y))) ;=> ([e _0] [_0 e])
+    (membero 'e (list 'pasta x 'fagioli y))) ;=> ([e _0] [_0 e])
 
   (run* [q]
     (fresh [x y]
-      (l/== `(pasta ~x fagioli ~y) q)
-      (l/membero `e q))) ;=> ((pasta e fagioli _0) (pasta _0 fagioli e))
+      (l/== (list 'pasta x 'fagioli y) q)
+      (l/membero 'e q))) ;=> ((pasta e fagioli _0) (pasta _0 fagioli e))
 
   ;; this is not ((tofu)), because firsto in membero leaves the lvar
   ;; of the rest of the list fresh, so l can be an improper list
@@ -356,7 +356,7 @@
   (defn proper-member? [x l]
     (cond
       (empty? l) false
-      (= (first l) x) (list? (rest l))
+      (= (first l) x) (seq? (rest l))
       :else (proper-member? x (rest l))))
 
   (comment

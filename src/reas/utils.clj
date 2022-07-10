@@ -17,3 +17,13 @@
        (fn []
          ((and* ~(vec goals)) s#)))))
 
+;; see chapter 2 and
+;; https://github.com/clojure/core.logic/wiki/Differences-from-The-Reasoned-Schemer
+(defn pair?
+  "True if x is a pair, false otherwise."
+  [x]
+  (case (or (l/lcons? x) (and (coll? x) (seq x)))
+    (nil false) false
+    true))
+
+

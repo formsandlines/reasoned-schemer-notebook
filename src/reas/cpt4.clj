@@ -2,7 +2,7 @@
   (:require
    [clojure.core.logic :as l :refer [run run* succeed fail s# u# defne
                                      conde fresh lcons llist]]
-   [reas.utils :as rs :refer [defrel]]))
+   [reas.utils :as rs :refer [defrel pair?]]))
 
 
 ;;=============================================================
@@ -47,6 +47,11 @@
     ([[a . d] _ _] (fresh [res]
                      (l/conso a res out)
                      (appendo-safe d t res))))
+
+  #_:clj-kondo/ignore
+  (defne unwrapo [x out]
+    ([[a . _] _] (unwrapo a out))
+    ([_ x]))
   )
 
 (comment
@@ -131,8 +136,8 @@
   (run* [x]
     (fresh [y]
       (l/appendo
-        `(cake & ice ~y)
-        `(tastes yummy)
+        (list 'cake '& 'ice y)
+        '(tastes yummy)
         x))) ;=> ((cake & ice _0 tastes yummy))
 
   ;; y doesn’t need to be a list in the t-position of appendo
@@ -249,7 +254,7 @@
   )
 (comment
   ;;-------------------------------------------------------------
-  ;; swappendo
+  ;; order of results cond^e
 
   (comment
     ;; conso fails if the list (result) is empty:
@@ -267,9 +272,6 @@
   ;; Swapping two cond^e lines does not affect the values
   ;; contributed by cond^e.
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-  (defn pair? [l]
-    (and (seqable? l) ((complement empty?) l)))
 
   (defn unwrap [x]
     (cond

@@ -2,7 +2,7 @@
   (:require
    [clojure.core.logic :as l :refer [run* succeed fail s# u# defne
                                      conde fresh and* or* lcons llist]]
-   [reas.utils :as rs :refer [defrel]]))
+   [reas.utils :as rs :refer [defrel pair?]]))
 
 
 ;;=============================================================
@@ -82,7 +82,7 @@
 
   (run* [r]
     (fresh [x y]
-      (l/firsto `(~r ~y) x)
+      (l/firsto (list r y) x)
       (l/== 'pear x))) ;=> (pear)
 
   'lcons ;; is core.logic’s way to create sequences with
@@ -125,7 +125,7 @@
     (cdro '(a c o r n) '(c o r n))) ;=> (_0)
 
   (run* [x]
-    (cdro `(c o r n) `(~x r n))) ;=> (o)
+    (cdro '(c o r n) (list x 'r 'n))) ;=> (o)
 
   (run* [l]
     (fresh [x]
@@ -148,21 +148,21 @@
 
   (run* [r]
     (fresh [x y z]
-      (l/== `(e a d ~x) r)
-      (l/conso y `(a ~z c) r))) ;=> ((e a d c))
+      (l/== (list 'e 'a 'd x) r)
+      (l/conso y (list 'a z 'c) r))) ;=> ((e a d c))
 
   (run* [x]
-    (l/conso x `(a ~x c) `(d a ~x c))) ;=> (d)
+    (l/conso x (list 'a x 'c) (list 'd 'a x 'c))) ;=> (d)
 
   (run* [l]
     (fresh [x]
-      (l/== `(d a ~x c) l)
-      (l/conso x `(a ~x c) l))) ;=> ((d a d c))
+      (l/== (list 'd 'a x 'c) l)
+      (l/conso x (list 'a x 'c) l))) ;=> ((d a d c))
 
   (run* [l]
     (fresh [x]
-      (l/conso x `(a ~x c) l)
-      (l/== `(d a ~x c) l))) ;=> ((d a d c))
+      (l/conso x (list 'a x 'c) l)
+      (l/== (list 'd 'a x 'c) l))) ;=> ((d a d c))
 
   'conso ;; re-implemented
 
@@ -215,16 +215,16 @@
   ;; (car p) selects the first, (cdr p) the second element of a pair
   ;; a pair cannot be an empty list, because it has no car and cdr
 
-  (defn pair? [l]
-    (and (seqable? l) ((complement empty?) l)))
-
-  (comment
-    ;; Can you extend empty? and pair? to lcons ?
-    )
+  'pair? ; implemened
 
   (pair? '()) ;=> false
   (pair? 'pair) ;=> false
   (pair? '(pear)) ;=> true
+
+  (pair? (lcons 'a 'b)) ;=> true
+  (pair? (lcons 'a '())) ;=> true
+  (pair? (llist 'a 'b 'c)) ;=> true
+  (pair? (llist 'a 'b '())) ;=> true
 
   (run* [r]
     (fresh [x y]
