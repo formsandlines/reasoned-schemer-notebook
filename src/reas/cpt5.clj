@@ -15,6 +15,15 @@
        (l/resto l d)
        (memo x d out))]))
 
+(defn rembero [x l out]
+  (conde
+    [(l/emptyo l) (l/emptyo out)]
+    [(l/conso x out l)]
+    [(fresh [a d res]
+       (l/conso a d l)
+       (l/conso a res out)
+       (rembero x d res))]))
+
 (comment
   ;; alternative, more concise definitions using defne:
 
@@ -22,6 +31,14 @@
   (defne memo [x l out]
     ([_ [x . _] l])
     ([_ [_ . d] _] (memo x d out)))
+
+  #_:clj-kondo/ignore
+  (defne rembero [x l out]
+    ([_ '() '()])
+    ([_ [x . out] _])
+    ([_ [a . d] _] (fresh [res]
+                     (l/conso a res out)
+                     (rembero x d res))))
 
   )
 
@@ -89,6 +106,55 @@
   ;    [(fig . _0) (fig . _0)]
   ;    [(fig . _0) (_1 fig . _0)]
   ;    [(fig . _0) (_1 _2 fig . _0)])
+
+  )
+(comment
+  ;;-------------------------------------------------------------
+  ;; rembero
+
+  (defn rember [x l]
+    (cond
+      (empty? l) '()
+      (= (first l) x) (rest l)
+      :else (cons (first l)
+              (rember x (rest l)))))
+
+  (rember 'pea '(a b pea d pea e)) ;=> (a b d pea e)
+
+  'rembero ;; implemented
+
+  ;; the third conde case in rembero also succeeds and contributes values
+  (run* [out]
+    (rembero 'pea '(pea) out)) ;=> (() (pea))
+
+  (run* [out]
+    (rembero 'pea '(pea pea) out)) ;=> ((pea) (pea) (pea pea))
+
+  (run* [out]
+    (fresh [y z]
+      (rembero y (list 'a 'b y 'd z 'e) out)))
+  ;=> ((b a d _0 e)
+  ;    (a b d _0 e)
+  ;    (a b d _0 e)
+  ;    (a b d _0 e)
+  ;    (a b _0 d e)
+  ;    (a b e d _0)
+  ;    (a b _0 d _1 e))
+
+  (run* [y z]
+    (rembero y (list y 'd z 'e) (list y 'd 'e)))
+  ;=> ([d d]
+  ;    [d d]
+  ;    [_0 _0]
+  ;    [e e])
+
+  (run 5 [y z w out]
+    (rembero y (lcons z w) out))
+  ;=> ([_0 _0 _1 _1]
+  ;    [_0 _1 () (_1)]
+  ;    [_0 _1 (_0 . _2) (_1 . _2)]
+  ;    [_0 _1 (_2) (_1 _2)]
+  ;    [_0 _1 (_2 _0 . _3) (_1 _2 . _3)])
 
   )
 

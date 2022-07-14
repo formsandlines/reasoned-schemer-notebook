@@ -20,3 +20,5 @@ pom.xml.asc
 /.repl
 *.log
 /.env
+
+/src/reas/exp.clj
